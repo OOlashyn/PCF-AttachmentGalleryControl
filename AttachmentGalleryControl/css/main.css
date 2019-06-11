@@ -1,0 +1,57 @@
+.thumbnails {
+    height: 80px;
+    border: 4px solid #555;
+    padding: 1px;
+    margin: 0 10px 10px 0;
+}
+
+.thumbnails:hover {
+    border: 4px solid #00ccff;
+    cursor: pointer;
+}
+
+.galleryList {
+    display: block;
+    position: relative;
+    height: auto;
+    max-width: 500px;
+    overflow-y: hidden;
+    overflow-x: auto;
+    word-wrap: normal;
+    white-space: nowrap;
+}
+
+.bigPreview {
+    max-height: 400px;
+    max-width: 100%;
+    display: block;
+}
+
+.bigPreview:hover {
+    cursor: pointer;
+}
+
+.bigPreviewHolder {
+    max-height: 400px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.w3-section {
+    display: flex;
+    justify-content: center;
+}
+
+.main-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100vh;
+}
+
+.styled-modal{
+    background-color: rgba(0,0,0,0.9);
+}

@@ -16,6 +16,9 @@
     -->
     <resources>
       <code path="index.ts" order="1"/>
+      <css path="css/w3.css" order="1" />
+      <css path="css/main.css" order="1" />
+      <img path="img/info32.png" />
       <!-- UNCOMMENT TO ADD MORE RESOURCES
       <css path="css/AttachmentGalleryControl.css" order="1" />
       <resx path="strings/AttachmentGalleryControl.1033.resx" version="1.0.0" />
