@@ -21,7 +21,7 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 	private _noteText: HTMLParagraphElement;
 	private _textColumn: HTMLDivElement;
 	private _imageColumn: HTMLDivElement;
-
+	private _infoImg: HTMLImageElement;
 	/**
 	 * Empty constructor.
 	 */
@@ -48,6 +48,7 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 		this.changeImage = this.changeImage.bind(this);
 		this.setPreviewFromThumbnail = this.setPreviewFromThumbnail.bind(this);
 		this.toggleColumn = this.toggleColumn.bind(this);
+		this.generateImageSrcUrl = this.generateImageSrcUrl.bind(this); 
 
 		this._container = document.createElement("div");
 
@@ -103,7 +104,7 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 		imageColumn.className = "w3-display-container";
 
 		let contentContainer = document.createElement("div");
-		contentContainer.classList.add("w3-content");
+		contentContainer.classList.add("w3-content", "w3-center");
 		contentContainer.style.maxWidth = "1200px";
 		contentContainer.style.backgroundColor = "black";
 
@@ -123,12 +124,22 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 		leftButton.innerHTML = "❮";
 		leftButton.onclick= () => this.changeImage(-1);
 
+
 		let infoSpan = document.createElement("img");
 		infoSpan.className = "w3-display-topright w3-xlarge";
-		infoSpan.src = "info32.png";
 		infoSpan.style.cursor = 'pointer';
 		infoSpan.style.padding = "10px";
 		infoSpan.addEventListener('click', this.toggleColumn);
+
+		this._infoImg = infoSpan;
+
+		context.resources.getResource(
+			"info32.png",
+			this.setImage.bind(this, "png"),
+			function() {
+				console.error("Error while parsing image");
+			});
+
 
 		imageColumn.appendChild(contentContainer);
 		imageColumn.appendChild(rightButton);
@@ -168,6 +179,8 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 
 		container.appendChild(this._container);
 
+		console.log("Context", context);
+
 		let curentRecord: ComponentFramework.EntityReference = {
 			id: (<any>context).page.entityId,
 			name: (<any>context).page.entityTypeName
@@ -175,6 +188,23 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 	
 		this.GetAttachments(curentRecord).then( result => this.CreateGallery(result));
 	
+	}
+
+	private setImage(fileType: string, fileContent: string): void
+	{
+		console.log(fileContent);
+		let imageUrl:string = this.generateImageSrcUrl(fileType, fileContent);
+		this._infoImg.src = imageUrl;
+	}
+
+	/**
+	 * Generate Image Element src url
+	 * @param fileType file extension
+	 * @param fileContent file content, base 64 format
+	 */
+	private generateImageSrcUrl(fileType: string, fileContent: string): string
+	{
+		return  "data:image/" + fileType + ";base64, " + fileContent;
 	}
 
 	private toggleColumn():void{
@@ -220,7 +250,7 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 			for (let i = 0; i < result.length; i++) {
 				let newImg = document.createElement('img');
 				newImg.className = "thumbnails w3-opacity w3-hover-opacity-off";
-				newImg.src = "data:" + result[i].mimeType + ";base64," + result[i].documentBody;
+				newImg.src = this.generateImageSrcUrl(result[i].mimeType,result[i].documentBody);
 				newImg.alt = count.toString();
 				newImg.addEventListener('click', this.setPreviewFromThumbnail);
 				this._thumbnailsGallery.appendChild(newImg);
@@ -240,7 +270,8 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 	private setPreview(currentNoteNumber:number){
 		if (currentNoteNumber === this._notes.length ) {currentNoteNumber = 0}
 		if (currentNoteNumber < 0) {currentNoteNumber = this._notes.length-1}
-		this._previewImg.src = "data:" + this._notes[currentNoteNumber].mimeType + ";base64," + this._notes[currentNoteNumber].documentBody;
+		this._previewImg.src = this.generateImageSrcUrl(this._notes[currentNoteNumber].mimeType,
+			this._notes[currentNoteNumber].documentBody);
 		this._modalImage.src = this._previewImg.src;
 		this._noteTitle.innerHTML = this._notes[currentNoteNumber].title;
 		this._noteText.innerHTML = this._notes[currentNoteNumber].noteText;
