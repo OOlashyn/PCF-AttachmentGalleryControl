@@ -197,35 +197,38 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 		" and  isdocument eq true and startswith(mimetype, 'image/')";
 		const result = await this._context.webAPI.retrieveMultipleRecords("annotation", searchQuery);
 
-		for (let index = 0; index < result.entities.length; index++) {
+		if(result && result.entities){
+			for (let index = 0; index < result.entities.length; index++) {
 
-			let item: Attachment = {
-				id:  result.entities[index].id,
-				mimeType: result.entities[index].mimetype,
-				noteText: result.entities[index].notetext,
-				title: result.entities[index].subject,
-				documentBody: result.entities[index].documentbody
-			};
-			this._notes.push(item);
+				let item: Attachment = {
+					id:  result.entities[index].id,
+					mimeType: result.entities[index].mimetype,
+					noteText: result.entities[index].notetext,
+					title: result.entities[index].subject,
+					documentBody: result.entities[index].documentbody
+				};
+				this._notes.push(item);
+			}
 		}
 
 		return this._notes;
 	}
 
 	private CreateGallery(result: Attachment[]): any {
-		let count = 0;
-		for (let i = 0; i < result.length; i++) {
-			let newImg = document.createElement('img');
-			newImg.className = "thumbnails w3-opacity w3-hover-opacity-off";
-			newImg.src = "data:" + result[i].mimeType + ";base64," + result[i].documentBody;
-			newImg.alt = count.toString();
-			newImg.addEventListener('click', this.setPreviewFromThumbnail);
-			this._thumbnailsGallery.appendChild(newImg);
-			count++;
-		}
 		if (result.length > 0) {
-			this._currentIndex = 0;
-			this.setPreview(0);
+			let count = 0;
+			for (let i = 0; i < result.length; i++) {
+				let newImg = document.createElement('img');
+				newImg.className = "thumbnails w3-opacity w3-hover-opacity-off";
+				newImg.src = "data:" + result[i].mimeType + ";base64," + result[i].documentBody;
+				newImg.alt = count.toString();
+				newImg.addEventListener('click', this.setPreviewFromThumbnail);
+				this._thumbnailsGallery.appendChild(newImg);
+				count++;
+			}
+
+				this._currentIndex = 0;
+				this.setPreview(0);
 		}
 	}
 
