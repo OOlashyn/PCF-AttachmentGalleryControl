@@ -6,6 +6,4 @@ This is sample PCF control that shows images from attached notes and also can sh
 
 Current version is 0.0.5
 
-Download current version
-
 [Download](https://github.com/OOlashyn/PCF-AttachmentGalleryControl/releases/)
