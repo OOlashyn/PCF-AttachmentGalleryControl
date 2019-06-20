@@ -3,7 +3,7 @@
 This is sample PCF control that shows images from attached notes and also can show note title and note text.
 
 Check out how it works
-![Vidéo](https://youtu.be/oILXbhZEcQI)
+[![Video](http://img.youtube.com/vi/oILXbhZEcQI/0.jpg)](https://youtu.be/oILXbhZEcQI)
 
 Current version is 0.0.5
 
