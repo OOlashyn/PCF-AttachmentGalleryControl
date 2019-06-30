@@ -7,7 +7,7 @@ This is sample PCF control that shows images from attached notes and also can sh
 **NEW** Update to version 0.1.0
 
 * UI Rebuild - Removed dependency on w3.css. Now UI is fully custom. Showing current slide number and overall number of slides.
-* Full Sreen - Now images are opened in full screen.
+* Full Screen - Now slide show openes in full screen.
 
 ### Download Range Slider Control
 
