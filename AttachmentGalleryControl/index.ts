@@ -1,4 +1,5 @@
-import {IInputs, IOutputs} from "./generated/ManifestTypes";
+import { IInputs, IOutputs } from "./generated/ManifestTypes";
+import { img1, img2 } from "./demoImages";
 
 interface Attachment {
 	documentBody: string;
@@ -14,8 +15,9 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 	private _container: HTMLDivElement;
 	private _context: ComponentFramework.Context<IInputs>;
 	private _currentIndex: number;
-	private _notes: Attachment[]; 
+	private _notes: Attachment[];
 	private _modalContainer: HTMLDivElement;
+	private _modalHeaderText: HTMLHeadingElement;
 	private _modalImage: HTMLImageElement;
 	private _noteTitle: HTMLParagraphElement;
 	private _noteText: HTMLParagraphElement;
@@ -25,8 +27,7 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 	/**
 	 * Empty constructor.
 	 */
-	constructor()
-	{
+	constructor() {
 
 	}
 
@@ -38,8 +39,7 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 	 * @param state A piece of data that persists in one session for a single user. Can be set at any point in a controls life cycle by calling 'setControlState' in the Mode interface.
 	 * @param container If a control is marked control-type='starndard', it will receive an empty div element within which it can render its content.
 	 */
-	public init(context: ComponentFramework.Context<IInputs>, notifyOutputChanged: () => void, state: ComponentFramework.Dictionary, container:HTMLDivElement)
-	{
+	public init(context: ComponentFramework.Context<IInputs>, notifyOutputChanged: () => void, state: ComponentFramework.Dictionary, container: HTMLDivElement) {
 		this._notes = [];
 		this._context = context;
 		this.setPreview = this.setPreview.bind(this);
@@ -48,152 +48,141 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 		this.changeImage = this.changeImage.bind(this);
 		this.setPreviewFromThumbnail = this.setPreviewFromThumbnail.bind(this);
 		this.toggleColumn = this.toggleColumn.bind(this);
-		this.generateImageSrcUrl = this.generateImageSrcUrl.bind(this); 
+		this.generateImageSrcUrl = this.generateImageSrcUrl.bind(this);
+		this.GetAttachmentsDemo = this.GetAttachmentsDemo.bind(this);
 
 		this._container = document.createElement("div");
 
-		let mainSection = document.createElement("section");
-		mainSection.classList.add("main-section");
+		let mainContainer = document.createElement('div');
+		mainContainer.classList.add('main-container');
 
-		let mainBlock = document.createElement("div");
-		mainBlock.classList.add("main-block");
-
-		let previewHolder = document.createElement("div");
-		previewHolder.classList.add("bigPreviewHolder", "w3-row-padding", "w3-section");
-
-		this._previewImg = document.createElement("img");
-		this._previewImg.classList.add("bigPreview");
-		this._previewImg.addEventListener('click', this.openModal);
-
-		previewHolder.appendChild(this._previewImg);
-
-		mainBlock.appendChild(previewHolder);
-
-		let gallerySection = document.createElement("div");
-		gallerySection.classList.add("w3-row-padding", "w3-section");
-
+		//-------- creating thumbnails
 		this._thumbnailsGallery = document.createElement("div");
-		this._thumbnailsGallery.classList.add("galleryList");
+		this._thumbnailsGallery.classList.add('thumbnailsList');
 
-		gallerySection.appendChild(this._thumbnailsGallery);
+		//-------- creating preview section
+		let bigPreview = document.createElement("div");
+		bigPreview.classList.add('preview-section');
 
-		mainBlock.appendChild(gallerySection);
+		this._previewImg = document.createElement('img');
+		this._previewImg.classList.add('preview-img');
+		this._previewImg.onclick = () => this.openModal();
+		bigPreview.appendChild(this._previewImg);
+		
+		//-------- prev and next buttons
+		let next = document.createElement('a');
+		next.classList.add('arrow-button', 'preview-next');
+		next.innerHTML = "&#10095;";
+		next.onclick = () => this.changeImage(1);
 
-		mainSection.appendChild(mainBlock);
-		this._container.appendChild(mainSection);
+		let prev = document.createElement('a');
+		prev.classList.add('arrow-button', 'preview-prev');
+		prev.innerHTML = "&#10094;";
+		prev.onclick = () => this.changeImage(-1);
 
-		this._modalContainer = document.createElement("div");
-		this._modalContainer.classList.add('w3-modal', "styled-modal");
+		bigPreview.appendChild(prev);
+		bigPreview.appendChild(next);
 
-		let closeSpan = document.createElement("span");
-		closeSpan.classList.add("w3-text-white", "w3-xxlarge", "w3-hover-text-grey",
-		 "w3-container", "w3-display-topright");
-		closeSpan.style.cursor = "pointer";
-		closeSpan.innerHTML = "&times";
-		closeSpan.addEventListener('click', this.closeModal);
+		mainContainer.appendChild(bigPreview);
+		mainContainer.appendChild(this._thumbnailsGallery);
 
-		this._modalContainer.appendChild(closeSpan);
-
-		let modalContent = document.createElement("div");
-		modalContent.classList.add("w3-modal-content");
-
-		let row = document.createElement("div");
-		row.className = "w3-row";
-
-		let imageColumn = document.createElement("div");
-		imageColumn.className = "w3-display-container";
-
-		let contentContainer = document.createElement("div");
-		contentContainer.classList.add("w3-content", "w3-center");
-		contentContainer.style.maxWidth = "1200px";
-		contentContainer.style.backgroundColor = "black";
-
-		this._modalImage = document.createElement("img");
-		this._modalImage.style.maxWidth ="100%";
-		this._modalImage.style.height = "80vh";
-
-		contentContainer.appendChild(this._modalImage);
-
-		let rightButton = document.createElement("button");
-		rightButton.classList.add("w3-button", "w3-black", "w3-display-right");
-		rightButton.innerHTML = "❯";
-		rightButton.onclick= () => this.changeImage(1);
-
-		let leftButton = document.createElement("button");
-		leftButton.classList.add("w3-button", "w3-black", "w3-display-left");
-		leftButton.innerHTML = "❮";
-		leftButton.onclick= () => this.changeImage(-1);
-
-
-		let infoSpan = document.createElement("img");
-		infoSpan.className = "w3-display-topright w3-xlarge";
-		infoSpan.style.cursor = 'pointer';
-		infoSpan.style.padding = "10px";
-		infoSpan.addEventListener('click', this.toggleColumn);
-
-		this._infoImg = infoSpan;
-
-		context.resources.getResource(
-			"info32.png",
-			this.setImage.bind(this, "png"),
-			function() {
-				console.error("Error while parsing image");
-			});
-
-
-		imageColumn.appendChild(contentContainer);
-		imageColumn.appendChild(rightButton);
-		imageColumn.appendChild(leftButton);
-		imageColumn.appendChild(infoSpan);
-		row.appendChild(imageColumn);
-
-		this._imageColumn = imageColumn;
-
-		let textColumn = document.createElement("div");
-		textColumn.className = "w3-hide";
-		textColumn.style.color = "white";
-
-		let p = document.createElement("p");
-		p.style.color = "black";
-
-		this._noteTitle = p;
-
-		let hr = document.createElement("hr");
-		hr.style.borderTopColor = "black";
-
-		this._noteText = document.createElement("p");
-		this._noteText.style.color = "black";
-
-		textColumn.appendChild(this._noteTitle);
-		textColumn.appendChild(hr);
-		textColumn.appendChild(this._noteText);
-
-		row.appendChild(textColumn);
-
-		this._textColumn = textColumn;
-
-		modalContent.appendChild(row);
-		this._modalContainer.appendChild(modalContent);
-
-		this._container.appendChild(this._modalContainer);
+		this._container.appendChild(mainContainer);
 
 		container.appendChild(this._container);
 
-		console.log("Context", context);
+		//--------- create modal
+
+		this._modalContainer = document.createElement('div');
+		this._modalContainer.classList.add('dwc-modal');
+
+		let modalContent = document.createElement('div');
+		modalContent.classList.add('dwc-modal-content');
+
+		//--------- create modal header
+		let modalHeader = document.createElement('div');
+		modalHeader.classList.add('dwc-modal-header');
+
+		let leftHeaderContainer = document.createElement('div');
+		let rightHeaderContainer = document.createElement('div');
+
+		let closeSpan = document.createElement('span');
+		closeSpan.innerHTML = "&times;";
+		closeSpan.classList.add('close-span');
+		closeSpan.onclick = () => this.closeModal();
+		
+		let headerText = document.createElement('h3');
+		headerText.innerHTML = "0/10";
+		this._modalHeaderText = headerText;
+
+		rightHeaderContainer.appendChild(closeSpan);
+		leftHeaderContainer.appendChild(headerText);
+
+		modalHeader.appendChild(leftHeaderContainer);
+		modalHeader.appendChild(rightHeaderContainer);
+
+		modalContent.appendChild(modalHeader);
+		
+		//--------- create modal body
+
+		let modalBody = document.createElement('div');
+		modalBody.classList.add('dwc-modal-body');
+		
+		let modalImageConatiner = document.createElement('div');
+		modalImageConatiner.classList.add('dwc-modal-img-container');
+
+		let nextImgModal = document.createElement('a');
+		nextImgModal.classList.add('arrow-button', 'preview-next');
+		nextImgModal.innerHTML = "&#10095;";
+		nextImgModal.onclick = () => this.changeImage(1);
+
+		let prevImgModal = document.createElement('a');
+		prevImgModal.classList.add('arrow-button', 'preview-prev');
+		prevImgModal.innerHTML = "&#10094;";
+		prevImgModal.onclick = () => this.changeImage(-1);
+
+		modalImageConatiner.appendChild(nextImgModal);
+		modalImageConatiner.appendChild(prevImgModal);
+
+		this._modalImage = document.createElement('img');
+		this._modalImage.classList.add('dwc-modal-img');
+		
+		modalImageConatiner.appendChild(this._modalImage);
+		modalBody.appendChild(modalImageConatiner);
+
+		modalContent.appendChild(modalBody);
+		this._modalContainer.appendChild(modalContent);
+
+		document.body.appendChild(this._modalContainer);
 
 		let curentRecord: ComponentFramework.EntityReference = {
 			id: (<any>context).page.entityId,
 			name: (<any>context).page.entityTypeName
 		}
-	
+
 		this.GetAttachments(curentRecord).then( result => this.CreateGallery(result));
-	
+		//this.GetAttachmentsDemo();
 	}
 
-	private setImage(fileType: string, fileContent: string): void
-	{
+	private GetAttachmentsDemo(): void {
+
+		for (let index = 0; index < 10; index++) {
+
+			let item: Attachment = {
+				id: index.toString(),
+				mimeType: "jpeg",
+				noteText: "Text for image number: " + index.toString(),
+				title: "Title " + index.toString(),
+				documentBody: index % 2 ? img1 : img2
+			};
+			this._notes.push(item);
+		}
+
+		this.CreateGallery(this._notes);
+	}
+
+	private setImage(fileType: string, fileContent: string): void {
 		console.log(fileContent);
-		let imageUrl:string = this.generateImageSrcUrl(fileType, fileContent);
+		let imageUrl: string = this.generateImageSrcUrl(fileType, fileContent);
 		this._infoImg.src = imageUrl;
 	}
 
@@ -202,36 +191,35 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 	 * @param fileType file extension
 	 * @param fileContent file content, base 64 format
 	 */
-	private generateImageSrcUrl(fileType: string, fileContent: string): string
-	{
-		return  "data:image/" + fileType + ";base64, " + fileContent;
+	private generateImageSrcUrl(fileType: string, fileContent: string): string {
+		return "data:image/" + fileType + ";base64, " + fileContent;
 	}
 
-	private toggleColumn():void{
+	private toggleColumn(): void {
 		this._textColumn.classList.toggle('w3-hide');
 		this._textColumn.classList.toggle('w3-rest');
 		this._imageColumn.classList.toggle('w3-threequarter');
 	}
 
-	private openModal(e: Event):void {
+	private openModal(): void {
 		this._modalContainer.style.display = "block";
 	}
 
-	private closeModal(e: Event):void{
+	private closeModal(): void {
 		this._modalContainer.style.display = "none";
 	}
 
 	private async GetAttachments(curentRecord: ComponentFramework.EntityReference): Promise<Attachment[]> {
-		let searchQuery = "?$select=annotationid,documentbody,mimetype,notetext,subject&$filter=_objectid_value eq " + 
-		curentRecord.id +
-		" and  isdocument eq true and startswith(mimetype, 'image/')";
+		let searchQuery = "?$select=annotationid,documentbody,mimetype,notetext,subject&$filter=_objectid_value eq " +
+			curentRecord.id +
+			" and  isdocument eq true and startswith(mimetype, 'image/')";
 		const result = await this._context.webAPI.retrieveMultipleRecords("annotation", searchQuery);
 
-		if(result && result.entities){
+		if (result && result.entities) {
 			for (let index = 0; index < result.entities.length; index++) {
 
 				let item: Attachment = {
-					id:  result.entities[index].id,
+					id: result.entities[index].id,
 					mimeType: result.entities[index].mimetype,
 					noteText: result.entities[index].notetext,
 					title: result.entities[index].subject,
@@ -249,44 +237,44 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 			let count = 0;
 			for (let i = 0; i < result.length; i++) {
 				let newImg = document.createElement('img');
-				newImg.className = "thumbnails w3-opacity w3-hover-opacity-off";
-				newImg.src = this.generateImageSrcUrl(result[i].mimeType,result[i].documentBody);
+				newImg.className = "thumbnail";
+				newImg.src = this.generateImageSrcUrl(result[i].mimeType, result[i].documentBody);
 				newImg.alt = count.toString();
 				newImg.addEventListener('click', this.setPreviewFromThumbnail);
 				this._thumbnailsGallery.appendChild(newImg);
 				count++;
 			}
 
-				this._currentIndex = 0;
-				this.setPreview(0);
+			this._currentIndex = 0;
+			this.setPreview(0);
 		}
 	}
 
-	private setPreviewFromThumbnail(e: Event){
+	private setPreviewFromThumbnail(e: Event) {
 		let currentImgIndex = parseInt((e.srcElement as HTMLImageElement).alt);
 		this.setPreview(currentImgIndex);
 	}
 
-	private setPreview(currentNoteNumber:number){
-		if (currentNoteNumber === this._notes.length ) {currentNoteNumber = 0}
-		if (currentNoteNumber < 0) {currentNoteNumber = this._notes.length-1}
+	private setPreview(currentNoteNumber: number) {
+		if (currentNoteNumber === this._notes.length) { currentNoteNumber = 0 }
+		if (currentNoteNumber < 0) { currentNoteNumber = this._notes.length - 1 }
 		this._previewImg.src = this.generateImageSrcUrl(this._notes[currentNoteNumber].mimeType,
 			this._notes[currentNoteNumber].documentBody);
+		this._modalHeaderText.innerHTML = (currentNoteNumber+1).toString() + " / " + this._notes.length.toString();
 		this._modalImage.src = this._previewImg.src;
-		this._noteTitle.innerHTML = this._notes[currentNoteNumber].title;
-		this._noteText.innerHTML = this._notes[currentNoteNumber].noteText;
+		// this._noteTitle.innerHTML = this._notes[currentNoteNumber].title;
+		// this._noteText.innerHTML = this._notes[currentNoteNumber].noteText;
 		this._currentIndex = currentNoteNumber;
 	}
 
-	private changeImage(moveIndex:number){
-		this.setPreview(this._currentIndex+=moveIndex);
+	private changeImage(moveIndex: number) {
+		this.setPreview(this._currentIndex += moveIndex);
 	}
 	/**
 	 * Called when any value in the property bag has changed. This includes field values, data-sets, global values such as container height and width, offline status, control metadata values such as label, visible, etc.
 	 * @param context The entire property bag available to control via Context Object; It contains values as set up by the customizer mapped to names defined in the manifest, as well as utility functions
 	 */
-	public updateView(context: ComponentFramework.Context<IInputs>): void
-	{
+	public updateView(context: ComponentFramework.Context<IInputs>): void {
 		// Add code to update control view
 	}
 
@@ -294,8 +282,7 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 	 * It is called by the framework prior to a control receiving new data. 
 	 * @returns an object based on nomenclature defined in manifest, expecting object[s] for property marked as “bound” or “output”
 	 */
-	public getOutputs(): IOutputs
-	{
+	public getOutputs(): IOutputs {
 		return {};
 	}
 
@@ -303,8 +290,7 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 	 * Called when the control is to be removed from the DOM tree. Controls should use this call for cleanup.
 	 * i.e. cancelling any pending remote calls, removing listeners, etc.
 	 */
-	public destroy(): void
-	{
+	public destroy(): void {
 		// Add code to cleanup control if necessary
 	}
 }
