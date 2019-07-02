@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="DancingWithCrmControls" constructor="AttachmentGalleryControl" version="0.1.0" display-name-key="AttachmentGalleryControl" description-key="Control to show gallery pictures from related notes" control-type="standard">
+  <control namespace="DancingWithCrmControls" constructor="AttachmentGalleryControl" version="0.1.2" display-name-key="AttachmentGalleryControl" description-key="Control to show gallery pictures from related notes" control-type="standard">
     <!-- property node identifies a specific, configurable piece of data that the control expects from CDS -->
     <property name="PlaceHolder" display-name-key="PlaceHolder" description-key="PlaceHolder for gallery" of-type="SingleLine.Text" usage="bound" required="true" />
 
@@ -8,6 +8,9 @@
       <code path="index.ts" order="1"/>
       <css path="css/main.css" order="1" />
       <img path="img/info32.png" />
+      <img path="img/download.png" />
+      <img path="img/close.png" />
+      <img path="img/info.png" />
       <!-- UNCOMMENT TO ADD MORE RESOURCES
       <css path="css/AttachmentGalleryControl.css" order="1" />
       <resx path="strings/AttachmentGalleryControl.1033.resx" version="1.0.0" />

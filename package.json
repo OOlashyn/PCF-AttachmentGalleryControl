@@ -10,9 +10,11 @@
   },
   "dependencies": {
     "@types/node": "^10.14.10",
-    "@types/powerapps-component-framework": "1.1.0"
+    "@types/powerapps-component-framework": "1.1.0",
+    "file-saver": "^2.0.2"
   },
   "devDependencies": {
+    "@types/file-saver": "^2.0.1",
     "pcf-scripts": "^0.2.71",
     "pcf-start": "^0.2.71"
   }

@@ -1,5 +1,6 @@
 import { IInputs, IOutputs } from "./generated/ManifestTypes";
 import { img1, img2 } from "./demoImages";
+import { saveAs } from 'file-saver';
 
 interface Attachment {
 	documentBody: string;
@@ -7,6 +8,7 @@ interface Attachment {
 	title: string;
 	noteText: string;
 	id: string;
+	filename: string;
 }
 
 export class AttachmentGalleryControl implements ComponentFramework.StandardControl<IInputs, IOutputs> {
@@ -50,6 +52,8 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 		this.toggleColumn = this.toggleColumn.bind(this);
 		this.generateImageSrcUrl = this.generateImageSrcUrl.bind(this);
 		this.GetAttachmentsDemo = this.GetAttachmentsDemo.bind(this);
+		this.b64toBlob = this.b64toBlob.bind(this);
+		this.downloadFile = this.downloadFile.bind(this);
 
 		this._container = document.createElement("div");
 
@@ -68,7 +72,7 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 		this._previewImg.classList.add('preview-img');
 		this._previewImg.onclick = () => this.openModal();
 		bigPreview.appendChild(this._previewImg);
-		
+
 		//-------- prev and next buttons
 		let next = document.createElement('a');
 		next.classList.add('arrow-button', 'preview-next');
@@ -104,29 +108,45 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 
 		let leftHeaderContainer = document.createElement('div');
 		let rightHeaderContainer = document.createElement('div');
+		rightHeaderContainer.classList.add("header-icon-container");
 
-		let closeSpan = document.createElement('span');
-		closeSpan.innerHTML = "&times;";
-		closeSpan.classList.add('close-span');
-		closeSpan.onclick = () => this.closeModal();
-		
+		let downloadIcon = document.createElement('img');
+		downloadIcon.classList.add("header-icon");
+		downloadIcon.src = "img/download.png";
+		downloadIcon.addEventListener('click', this.downloadFile);
+
+		rightHeaderContainer.appendChild(downloadIcon);
+
+		let infoIcon = document.createElement('img');
+		infoIcon.classList.add("header-icon");
+		infoIcon.src = "img/info.png";
+
+		rightHeaderContainer.appendChild(infoIcon);
+
+		let closeIcon = document.createElement('img');
+		closeIcon.classList.add("header-icon");
+		closeIcon.src = "img/close.png";
+		closeIcon.addEventListener('click', this.closeModal);
+
+		rightHeaderContainer.appendChild(closeIcon);
+
+
 		let headerText = document.createElement('h3');
 		headerText.innerHTML = "0/10";
 		this._modalHeaderText = headerText;
 
-		rightHeaderContainer.appendChild(closeSpan);
 		leftHeaderContainer.appendChild(headerText);
 
 		modalHeader.appendChild(leftHeaderContainer);
 		modalHeader.appendChild(rightHeaderContainer);
 
 		modalContent.appendChild(modalHeader);
-		
+
 		//--------- create modal body
 
 		let modalBody = document.createElement('div');
 		modalBody.classList.add('dwc-modal-body');
-		
+
 		let modalImageConatiner = document.createElement('div');
 		modalImageConatiner.classList.add('dwc-modal-img-container');
 
@@ -145,7 +165,7 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 
 		this._modalImage = document.createElement('img');
 		this._modalImage.classList.add('dwc-modal-img');
-		
+
 		modalImageConatiner.appendChild(this._modalImage);
 		modalBody.appendChild(modalImageConatiner);
 
@@ -158,6 +178,8 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 			id: (<any>context).page.entityId,
 			name: (<any>context).page.entityTypeName
 		}
+
+		//context.mode.setFullScreen(true);
 
 		this.GetAttachments(curentRecord).then( result => this.CreateGallery(result));
 		//this.GetAttachmentsDemo();
@@ -172,12 +194,43 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 				mimeType: "jpeg",
 				noteText: "Text for image number: " + index.toString(),
 				title: "Title " + index.toString(),
+				filename: "img"+index.toString()+".jpeg",
 				documentBody: index % 2 ? img1 : img2
 			};
 			this._notes.push(item);
 		}
 
 		this.CreateGallery(this._notes);
+	}
+
+	private b64toBlob(b64Data: string, contentType: string, sliceSize: number):Blob {
+		contentType = contentType || '';
+		sliceSize = sliceSize || 512;
+
+		var byteCharacters = atob(b64Data);
+		var byteArrays = [];
+
+		for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+			var slice = byteCharacters.slice(offset, offset + sliceSize);
+
+			var byteNumbers = new Array(slice.length);
+			for (var i = 0; i < slice.length; i++) {
+				byteNumbers[i] = slice.charCodeAt(i);
+			}
+
+			var byteArray = new Uint8Array(byteNumbers);
+
+			byteArrays.push(byteArray);
+		}
+
+		var blob = new Blob(byteArrays, { type: contentType });
+		return blob;
+	}
+
+	private downloadFile():void{
+		let note = this._notes[this._currentIndex];
+		let blob = this.b64toBlob(note.documentBody, note.mimeType, 512);
+		saveAs(blob, note.filename);
 	}
 
 	private setImage(fileType: string, fileContent: string): void {
@@ -210,7 +263,7 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 	}
 
 	private async GetAttachments(curentRecord: ComponentFramework.EntityReference): Promise<Attachment[]> {
-		let searchQuery = "?$select=annotationid,documentbody,mimetype,notetext,subject&$filter=_objectid_value eq " +
+		let searchQuery = "?$select=annotationid,documentbody,mimetype,notetext,subject,filename&$filter=_objectid_value eq " +
 			curentRecord.id +
 			" and  isdocument eq true and startswith(mimetype, 'image/')";
 		const result = await this._context.webAPI.retrieveMultipleRecords("annotation", searchQuery);
@@ -223,6 +276,7 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 					mimeType: result.entities[index].mimetype,
 					noteText: result.entities[index].notetext,
 					title: result.entities[index].subject,
+					filename: result.entities[index].filename,
 					documentBody: result.entities[index].documentbody
 				};
 				this._notes.push(item);
@@ -260,7 +314,8 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 		if (currentNoteNumber < 0) { currentNoteNumber = this._notes.length - 1 }
 		this._previewImg.src = this.generateImageSrcUrl(this._notes[currentNoteNumber].mimeType,
 			this._notes[currentNoteNumber].documentBody);
-		this._modalHeaderText.innerHTML = (currentNoteNumber+1).toString() + " / " + this._notes.length.toString();
+		this._modalHeaderText.innerHTML = (currentNoteNumber + 1).toString() + " / " + this._notes.length.toString()
+			+ " " + this._notes[currentNoteNumber].title;
 		this._modalImage.src = this._previewImg.src;
 		// this._noteTitle.innerHTML = this._notes[currentNoteNumber].title;
 		// this._noteText.innerHTML = this._notes[currentNoteNumber].noteText;
