@@ -1,3 +1,5 @@
+@import "https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/10.0.0/css/fabric.min.css";
+
 .thumbnail {
     border: 1px solid #ddd;
     border-radius: 4px;
@@ -37,8 +39,7 @@
 }
 
 .header-icon{
-    width:28px;
-    height:28px;
+    font-size: 24px;
     cursor: pointer;
 }
 
@@ -152,6 +153,34 @@
 .dwc-modal-img-container{
     height: 100%;
     width:100%;
+}
+
+.dwc-hide{
+    display: none;
+}
+
+.dwc-flex-container{
+    display: flex;
+}
+
+.dwc-pageinput-container{
+    margin-left: 4px;
+    margin-right: 4px;
+}
+
+.dwc-page-input {
+    width: 50px;
+    background-color: #7b7b7b;
+    border: none;
+    color: white;
+    text-align: right;
+    padding-right: 4px;
+    height: 24px;
+    font-size: 18px;
+}
+
+.dwc-page-span{
+    font-size:20px;
 }
 
 /* Add Animation */
