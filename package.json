@@ -9,10 +9,9 @@
     "start": "pcf-scripts start"
   },
   "dependencies": {
-    "@types/node": "^10.14.10",
+    "@types/node": "^10.14.15",
     "@types/powerapps-component-framework": "1.1.0",
-    "file-saver": "^2.0.2",
-    "pdfjs-dist": "^2.1.266"
+    "file-saver": "^2.0.2"
   },
   "devDependencies": {
     "@types/file-saver": "^2.0.1",

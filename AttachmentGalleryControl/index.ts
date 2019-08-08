@@ -1,7 +1,7 @@
 import { IInputs, IOutputs } from "./generated/ManifestTypes";
-import { img1, img2 } from "./demoImages";
+//import { img1, img2 } from "./demoImages";
+//import {pdf2} from './demoPdf2';
 import { saveAs } from 'file-saver';
-var pdfjsLib = require('pdfjs-dist');
 
 interface Attachment {
 	documentBody: string;
@@ -31,13 +31,13 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 	private _currentIndex: number;
 	private _notes: Attachment[];
 	private _modalContainer: HTMLDivElement;
+	private _modalContentContainer: HTMLDivElement;
 	private _modalHeaderText: HTMLHeadingElement;
 	private _modalImage: HTMLImageElement;
 	private _noteTitle: HTMLParagraphElement;
 	private _noteText: HTMLParagraphElement;
-	private _textColumn: HTMLDivElement;
+	private _noteTextContainer: HTMLDivElement;
 	private _imageColumn: HTMLDivElement;
-	private _infoImg: HTMLImageElement;
 	private _pdfCanvas: HTMLCanvasElement;
 	private pdfState: IPdfState;
 	private modalState: IModalState;
@@ -45,6 +45,9 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 	private _modalImageConatiner: HTMLDivElement;
 	private _pdfPageInput: HTMLInputElement;
 	private _pdfTotalPages: HTMLSpanElement;
+	private _pdfPageControlsContainer: HTMLDivElement;
+	private _imageViewerContainer: HTMLDivElement;
+	private pdfImageSrc: string;
 
 	/**
 	 * Empty constructor.
@@ -69,9 +72,9 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 		this.closeModal = this.closeModal.bind(this);
 		this.changeImage = this.changeImage.bind(this);
 		this.setPreviewFromThumbnail = this.setPreviewFromThumbnail.bind(this);
-		this.toggleColumn = this.toggleColumn.bind(this);
+		this.toggleNoteColumn = this.toggleNoteColumn.bind(this);
 		this.generateImageSrcUrl = this.generateImageSrcUrl.bind(this);
-		this.GetAttachmentsDemo = this.GetAttachmentsDemo.bind(this);
+		//this.GetAttachmentsDemo = this.GetAttachmentsDemo.bind(this);
 		this.b64toBlob = this.b64toBlob.bind(this);
 		this.downloadFile = this.downloadFile.bind(this);
 		this.setPdfViewer = this.setPdfViewer.bind(this);
@@ -79,6 +82,11 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 		this.togglePdfViwer = this.togglePdfViwer.bind(this);
 		this.setModalImage = this.setModalImage.bind(this);
 		this.changePdfPage = this.changePdfPage.bind(this);
+		this.zoomPdfPage = this.zoomPdfPage.bind(this);
+		this.setPdfPage = this.setPdfPage.bind(this);
+
+		this._context.resources.getResource('img/pdf_icon.png',
+						this.setPdfImage.bind(this), this.showError.bind(this,"ERROR with PDF Image!"));
 
 		this.modalState = {
 			isOpen: false,
@@ -138,6 +146,8 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 		let modalContent = document.createElement('div');
 		modalContent.classList.add('dwc-modal-content');
 
+		this._modalContentContainer = modalContent;
+
 		//--------- create modal header
 		let modalHeader = document.createElement('div');
 		modalHeader.classList.add('dwc-modal-header');
@@ -145,7 +155,7 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 		//--------- create pdf controls
 		let pdfControlsContainer = document.createElement('div');
 
-		pdfControlsContainer.classList.add('dwc-flex-container','dwc-pageinput-container');
+		pdfControlsContainer.classList.add('dwc-flex-container', 'dwc-pageinput-container', 'dwc-hide');
 
 		let prevPdfPageIcon = document.createElement('i');
 		prevPdfPageIcon.className = "header-icon ms-Icon ms-Icon--ChevronLeft";
@@ -154,13 +164,14 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 		pdfControlsContainer.appendChild(prevPdfPageIcon);
 
 		let pdfPageNumberContainer = document.createElement('div');
-		
+
 		let pdfPageInput = document.createElement('input');
 		pdfPageInput.value = '1';
 		pdfPageInput.className = 'dwc-page-input';
+		pdfPageInput.addEventListener('keypress', (e) => this.setPdfPage(e));
 
 		pdfPageNumberContainer.appendChild(pdfPageInput);
-		
+
 		this._pdfPageInput = pdfPageInput;
 
 		let totalPagesSpan = document.createElement('span');
@@ -168,7 +179,7 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 		totalPagesSpan.className = 'dwc-page-span';
 
 		pdfPageNumberContainer.appendChild(totalPagesSpan);
-		
+
 		this._pdfTotalPages = totalPagesSpan;
 
 		pdfControlsContainer.appendChild(pdfPageNumberContainer);
@@ -178,6 +189,29 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 		nextPdfPageIcon.addEventListener('click', () => this.changePdfPage(1));
 
 		pdfControlsContainer.appendChild(nextPdfPageIcon);
+
+		let zoomControlsContainer = document.createElement('div');
+		zoomControlsContainer.className = 'dwc-zoom-container';
+
+		let zoomText = document.createElement('span');
+		zoomText.style.color = 'white';
+		zoomText.innerHTML = 'Zoom: ';
+
+		let plusIcon = document.createElement('i');
+		plusIcon.className = "header-icon dwc-side-margin-4 ms-Icon ms-Icon--Add";
+		plusIcon.addEventListener('click', () => this.zoomPdfPage(0.2));
+
+		let minusIcon = document.createElement('i');
+		minusIcon.className = "header-icon dwc-side-margin-4 ms-Icon ms-Icon--Remove";
+		minusIcon.addEventListener('click', () => this.zoomPdfPage(-0.2));
+
+		zoomControlsContainer.appendChild(zoomText);
+		zoomControlsContainer.appendChild(plusIcon);
+		zoomControlsContainer.appendChild(minusIcon);
+
+		pdfControlsContainer.appendChild(zoomControlsContainer);
+
+		this._pdfPageControlsContainer = pdfControlsContainer;
 
 		//---------- create modal buttons
 		let rightHeaderContainer = document.createElement('div');
@@ -192,7 +226,7 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 
 		let infoIcon = document.createElement('i');
 		infoIcon.className = "header-icon ms-Icon ms-Icon--Info";
-		infoIcon.addEventListener('click', this.toggleColumn);
+		infoIcon.addEventListener('click', this.toggleNoteColumn);
 
 		rightHeaderContainer.appendChild(infoIcon);
 
@@ -239,6 +273,13 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 
 		//--------- image container
 
+		let imageViewerContainer = document.createElement('div');
+		imageViewerContainer.className = 'dwc-flex-container';
+
+		this._imageViewerContainer = imageViewerContainer;
+
+		modalBody.appendChild(imageViewerContainer);
+
 		let modalImageConatiner = document.createElement('div');
 		modalImageConatiner.classList.add('dwc-modal-img-container');
 
@@ -246,30 +287,31 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 		this._modalImage.classList.add('dwc-modal-img');
 
 		modalImageConatiner.appendChild(this._modalImage);
-		modalBody.appendChild(modalImageConatiner);
+		imageViewerContainer.appendChild(modalImageConatiner);
 
 		this._modalImageConatiner = modalImageConatiner;
 
 		//-------- create preview note container
 
 		let modalNoteTextContainer = document.createElement('div');
-		modalNoteTextContainer.classList.add('dwc-modal-notetext', 'dwc-hidden');
+		modalNoteTextContainer.classList.add('dwc-modal-notetext-container', 'dwc-hide');
 
 		let noteText = document.createElement('p');
+		noteText.className = 'dwc-modal-notetext';
 		modalNoteTextContainer.appendChild(noteText);
 
 		this._noteText = noteText;
+		this._noteTextContainer = modalNoteTextContainer;
 
-		modalBody.appendChild(modalNoteTextContainer);
+		imageViewerContainer.appendChild(modalNoteTextContainer);
 
 		//--------- create pdf viewer container
 
 		let pdfViewerContainer = document.createElement('div');
 		pdfViewerContainer.classList.add('dwc-hide');
 
-		let navigationPanel = document.createElement('div');
-
 		let canvasContainer = document.createElement('div');
+		canvasContainer.className = 'dwc-pdf-canvas-container';
 		canvasContainer.id = "canvas_container";
 
 		this._pdfCanvas = document.createElement('canvas');
@@ -277,71 +319,84 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 
 		canvasContainer.appendChild(this._pdfCanvas);
 
-		pdfViewerContainer.appendChild(navigationPanel);
 		pdfViewerContainer.appendChild(canvasContainer);
 
 		modalBody.appendChild(pdfViewerContainer);
 
 		this._pdfViewerContainer = pdfViewerContainer;
 
-
 		modalContent.appendChild(modalBody);
 		this._modalContainer.appendChild(modalContent);
 
 		document.body.appendChild(this._modalContainer);
+
+		console.log("context", context);
 
 		let curentRecord: ComponentFramework.EntityReference = {
 			id: (<any>context).page.entityId,
 			name: (<any>context).page.entityTypeName
 		}
 
-		//this.GetAttachments(curentRecord).then( result => this.CreateGallery(result));
-		this.GetAttachmentsDemo();
+		console.log("curentRecord", curentRecord);
+
+		const pdfScript = document.createElement('script');
+		pdfScript.src = 'https://unpkg.com/pdfjs-dist@latest/build/pdf.min.js';
+
+		document.body.appendChild(pdfScript);
+
+		this.GetAttachments(curentRecord).then(result => this.CreateGallery(result));
+		//this.GetAttachmentsDemo();
 	}
 
+	// private GetAttachmentsDemo(): void {
 
+	// 	for (let index = 0; index < 10; index++) {
 
-	private GetAttachmentsDemo(): void {
+	// 		let item: Attachment = {
+	// 			id: index.toString(),
+	// 			mimeType: "image/jpeg",
+	// 			noteText: "Text for image number: " + index.toString(),
+	// 			title: "Title " + index.toString(),
+	// 			filename: "img" + index.toString() + ".jpeg",
+	// 			documentBody: index % 2 ? img1 : img2
+	// 		};
+	// 		this._notes.push(item);
+	// 	}
 
-		for (let index = 0; index < 10; index++) {
+	// 	let pdfItem: Attachment = {
+	// 		id: '10',
+	// 		mimeType: "application/pdf",
+	// 		noteText: "Text for image number: " + '10',
+	// 		title: "Title " + '10',
+	// 		filename: "pdf_10.pdf",
+	// 		documentBody: 'JVBERi0xLjcKCjEgMCBvYmogICUgZW50cnkgcG9pbnQKPDwKICAvVHlwZSAvQ2F0YWxvZwog' +
+	// 			'IC9QYWdlcyAyIDAgUgo+PgplbmRvYmoKCjIgMCBvYmoKPDwKICAvVHlwZSAvUGFnZXMKICAv' +
+	// 			'TWVkaWFCb3ggWyAwIDAgMjAwIDIwMCBdCiAgL0NvdW50IDEKICAvS2lkcyBbIDMgMCBSIF0K' +
+	// 			'Pj4KZW5kb2JqCgozIDAgb2JqCjw8CiAgL1R5cGUgL1BhZ2UKICAvUGFyZW50IDIgMCBSCiAg' +
+	// 			'L1Jlc291cmNlcyA8PAogICAgL0ZvbnQgPDwKICAgICAgL0YxIDQgMCBSIAogICAgPj4KICA+' +
+	// 			'PgogIC9Db250ZW50cyA1IDAgUgo+PgplbmRvYmoKCjQgMCBvYmoKPDwKICAvVHlwZSAvRm9u' +
+	// 			'dAogIC9TdWJ0eXBlIC9UeXBlMQogIC9CYXNlRm9udCAvVGltZXMtUm9tYW4KPj4KZW5kb2Jq' +
+	// 			'Cgo1IDAgb2JqICAlIHBhZ2UgY29udGVudAo8PAogIC9MZW5ndGggNDQKPj4Kc3RyZWFtCkJU' +
+	// 			'CjcwIDUwIFRECi9GMSAxMiBUZgooSGVsbG8sIHdvcmxkISkgVGoKRVQKZW5kc3RyZWFtCmVu' +
+	// 			'ZG9iagoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDEwIDAwMDAwIG4g' +
+	// 			'CjAwMDAwMDAwNzkgMDAwMDAgbiAKMDAwMDAwMDE3MyAwMDAwMCBuIAowMDAwMDAwMzAxIDAw' +
+	// 			'MDAwIG4gCjAwMDAwMDAzODAgMDAwMDAgbiAKdHJhaWxlcgo8PAogIC9TaXplIDYKICAvUm9v' +
+	// 			'dCAxIDAgUgo+PgpzdGFydHhyZWYKNDkyCiUlRU9G'
+	// 	};
 
-			let item: Attachment = {
-				id: index.toString(),
-				mimeType: "jpeg",
-				noteText: "Text for image number: " + index.toString(),
-				title: "Title " + index.toString(),
-				filename: "img" + index.toString() + ".jpeg",
-				documentBody: index % 2 ? img1 : img2
-			};
-			this._notes.push(item);
-		}
+	// 	let pdfItem2: Attachment = {
+	// 		id: '11',
+	// 		mimeType: "application/pdf",
+	// 		noteText: "Text for image number: " + '11',
+	// 		title: "Title " + '11',
+	// 		filename: "pdf_11.pdf",
+	// 		documentBody: pdf2
+	// 	};
+	// 	this._notes.push(pdfItem);
+	// 	this._notes.push(pdfItem2);
 
-		let pdfItem: Attachment = {
-			id: '10',
-			mimeType: "pdf",
-			noteText: "Text for image number: " + '10',
-			title: "Title " + '10',
-			filename: "pdf_10.pdf",
-			documentBody: 'JVBERi0xLjcKCjEgMCBvYmogICUgZW50cnkgcG9pbnQKPDwKICAvVHlwZSAvQ2F0YWxvZwog' +
-				'IC9QYWdlcyAyIDAgUgo+PgplbmRvYmoKCjIgMCBvYmoKPDwKICAvVHlwZSAvUGFnZXMKICAv' +
-				'TWVkaWFCb3ggWyAwIDAgMjAwIDIwMCBdCiAgL0NvdW50IDEKICAvS2lkcyBbIDMgMCBSIF0K' +
-				'Pj4KZW5kb2JqCgozIDAgb2JqCjw8CiAgL1R5cGUgL1BhZ2UKICAvUGFyZW50IDIgMCBSCiAg' +
-				'L1Jlc291cmNlcyA8PAogICAgL0ZvbnQgPDwKICAgICAgL0YxIDQgMCBSIAogICAgPj4KICA+' +
-				'PgogIC9Db250ZW50cyA1IDAgUgo+PgplbmRvYmoKCjQgMCBvYmoKPDwKICAvVHlwZSAvRm9u' +
-				'dAogIC9TdWJ0eXBlIC9UeXBlMQogIC9CYXNlRm9udCAvVGltZXMtUm9tYW4KPj4KZW5kb2Jq' +
-				'Cgo1IDAgb2JqICAlIHBhZ2UgY29udGVudAo8PAogIC9MZW5ndGggNDQKPj4Kc3RyZWFtCkJU' +
-				'CjcwIDUwIFRECi9GMSAxMiBUZgooSGVsbG8sIHdvcmxkISkgVGoKRVQKZW5kc3RyZWFtCmVu' +
-				'ZG9iagoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDEwIDAwMDAwIG4g' +
-				'CjAwMDAwMDAwNzkgMDAwMDAgbiAKMDAwMDAwMDE3MyAwMDAwMCBuIAowMDAwMDAwMzAxIDAw' +
-				'MDAwIG4gCjAwMDAwMDAzODAgMDAwMDAgbiAKdHJhaWxlcgo8PAogIC9TaXplIDYKICAvUm9v' +
-				'dCAxIDAgUgo+PgpzdGFydHhyZWYKNDkyCiUlRU9G'
-		};
-		this._notes.push(pdfItem);
-
-		//this.setPdfViewer(pdfItem);
-
-		this.CreateGallery(this._notes);
-	}
+	// 	this.CreateGallery(this._notes);
+	// }
 
 	private b64toBlob(b64Data: string, contentType: string, sliceSize: number): Blob {
 		contentType = contentType || '';
@@ -373,24 +428,23 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 		saveAs(blob, note.filename);
 	}
 
-	private setImage(fileType: string, fileContent: string): void {
-		console.log(fileContent);
-		let imageUrl: string = this.generateImageSrcUrl(fileType, fileContent);
-		this._infoImg.src = imageUrl;
-	}
-
 	/**
 	 * Generate Image Element src url
 	 * @param fileType file extension
 	 * @param fileContent file content, base 64 format
 	 */
 	private generateImageSrcUrl(fileType: string, fileContent: string): string {
-		return "data:image/" + fileType + ";base64, " + fileContent;
+		return "data:" + fileType + ";base64, " + fileContent;
 	}
 
-	private toggleColumn(): void {
-		//
-		//this._noteText.parentElement.classList.remove('dwc-hide');
+	private toggleNoteColumn(): void {
+		if (this.modalState.isPdfViewerOpen) return;
+
+		if (this._noteTextContainer.classList.contains('dwc-hide')) {
+			this._noteTextContainer.classList.remove('dwc-hide');
+		} else {
+			this._noteTextContainer.classList.add('dwc-hide');
+		}
 	}
 
 	private openModal(): void {
@@ -407,38 +461,66 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 	}
 
 	private async GetAttachments(curentRecord: ComponentFramework.EntityReference): Promise<Attachment[]> {
-		let searchQuery = "?$select=annotationid,documentbody,mimetype,notetext,subject,filename&$filter=_objectid_value eq " +
+		console.log("GetAttachments started");
+
+		const searchQuery = "?$select=annotationid,documentbody,mimetype,notetext,subject,filename" +
+			"&$filter=_objectid_value eq " +
 			curentRecord.id +
-			" and  isdocument eq true and startswith(mimetype, 'image/')";
-		const result = await this._context.webAPI.retrieveMultipleRecords("annotation", searchQuery);
+			" and isdocument eq true and (startswith(mimetype, 'application/pdf') or startswith(mimetype, 'image/'))";
+		try {
 
-		if (result && result.entities) {
-			for (let index = 0; index < result.entities.length; index++) {
+			const result = await this._context.webAPI.retrieveMultipleRecords("annotation", searchQuery);
 
-				let item: Attachment = {
-					id: result.entities[index].id,
-					mimeType: result.entities[index].mimetype,
-					noteText: result.entities[index].notetext,
-					title: result.entities[index].subject,
-					filename: result.entities[index].filename,
-					documentBody: result.entities[index].documentbody
-				};
-				this._notes.push(item);
+			// if(typeof this._context.webAPI.retrieveMultipleRecords == 'function'){
+			// 	console.log("context.webAPI.retrieveMultipleRecords works!");
+			// 	result = await this._context.webAPI.retrieveMultipleRecords("annotation", searchQuery);
+			// } else {
+			// 	// @ts-ignore
+			// 	result = await Xrm.WebApi.retrieveMultipleRecords("annotation", searchQuery);
+			// }
+
+			console.log("Retrieved attachments", result);
+			if (result && result.entities) {
+				for (let index = 0; index < result.entities.length; index++) {
+
+					let item: Attachment = {
+						id: result.entities[index].id,
+						mimeType: result.entities[index].mimetype,
+						noteText: result.entities[index].notetext,
+						title: result.entities[index].subject,
+						filename: result.entities[index].filename,
+						documentBody: result.entities[index].documentbody
+					};
+					this._notes.push(item);
+				}
 			}
+		} catch (error) {
+			console.error("ERROR RETRIEVING ATTACHMENT");
+			console.error(error);
 		}
 
 		return this._notes;
 	}
 
+	private setPdfImage(body:string){
+		this.pdfImageSrc = this.generateImageSrcUrl('image/png',body);
+	}
+
+	private showError(text:string){
+		console.error("ERROR:", text);
+	}
+
 	private CreateGallery(result: Attachment[]): any {
+		console.log("Create Gallery Started");
+		console.log("Notes: ", result);
 		if (result.length > 0) {
 			let count = 0;
 			for (let i = 0; i < result.length; i++) {
 				let newImg = document.createElement('img');
 				newImg.className = "thumbnail";
-				newImg.src = result[i].mimeType != "pdf"
+				newImg.src = result[i].mimeType.indexOf('pdf') == -1
 					? this.generateImageSrcUrl(result[i].mimeType, result[i].documentBody)
-					: 'img/pdf_icon.png';
+					: this.pdfImageSrc;
 				newImg.alt = count.toString();
 				newImg.addEventListener('click', this.setPreviewFromThumbnail);
 				this._thumbnailsGallery.appendChild(newImg);
@@ -455,17 +537,21 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 		this.setPreview(currentImgIndex);
 	}
 
-	private setModalImage(note:Attachment){
-		let isAttachmentPdf = note.mimeType == "pdf";
+	private setModalImage(note: Attachment) {
+		let isAttachmentPdf = note.mimeType.indexOf('pdf') != -1;
 
 		if (this.modalState.isOpen && !this.modalState.isPdfViewerOpen && isAttachmentPdf) {
 			this.togglePdfViwer(true);
 			this.setPdfViewer(note);
 		} else {
-			if (this.modalState.isOpen && this.modalState.isPdfViewerOpen && !isAttachmentPdf) {
-				this.togglePdfViwer(false);
+			if (this.modalState.isOpen && this.modalState.isPdfViewerOpen && isAttachmentPdf) {
+				this.setPdfViewer(note);
+			} else {
+				if (this.modalState.isOpen && this.modalState.isPdfViewerOpen && !isAttachmentPdf) {
+					this.togglePdfViwer(false);
+				}
+				this._modalImage.src = this._previewImg.src;
 			}
-			this._modalImage.src = this._previewImg.src;
 		}
 	}
 
@@ -474,16 +560,16 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 		if (currentNoteNumber < 0) { currentNoteNumber = this._notes.length - 1 }
 		let currentNote = this._notes[currentNoteNumber];
 
-		let isAttachmentPdf = currentNote.mimeType == "pdf";
+		let isAttachmentPdf = currentNote.mimeType.indexOf('pdf') != -1;
 
 		this._previewImg.src = !isAttachmentPdf
 			? this.generateImageSrcUrl(currentNote.mimeType, currentNote.documentBody)
-			: 'img/pdf_icon.png';
+			: this.pdfImageSrc;
 
 		this._modalHeaderText.innerHTML = (currentNoteNumber + 1).toString() + " / " + this._notes.length.toString()
 			+ " " + currentNote.title;
 
-		if(this.modalState.isOpen){
+		if (this.modalState.isOpen) {
 			this.setModalImage(currentNote);
 		}
 
@@ -502,6 +588,10 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 		// @ts-ignore
 		pdfjsLib.getDocument({ data: pdfData }).promise.then((pdf) => {
 			this.pdfState.pdf = pdf;
+			this.pdfState.currentPage = 1;
+			this.pdfState.zoom = 1;
+			this._pdfPageInput.value = '1';
+
 			this._pdfTotalPages.innerHTML = " / " + pdf._pdfInfo.numPages.toString();
 			this.pdfRender();
 		});
@@ -530,21 +620,58 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 	private togglePdfViwer(visible: boolean): void {
 		if (visible) {
 			this._pdfViewerContainer.classList.remove("dwc-hide");
-			this._modalImageConatiner.classList.add("dwc-hide");
+			this._pdfPageControlsContainer.classList.remove("dwc-hide");
+			this._imageViewerContainer.classList.add("dwc-hide");
+			this._modalContentContainer.classList.add('dwc-overflow');
 			this.modalState.isPdfViewerOpen = true;
 		} else {
 			this._pdfViewerContainer.classList.add("dwc-hide");
-			this._modalImageConatiner.classList.remove("dwc-hide");
+			this._pdfPageControlsContainer.classList.add("dwc-hide");
+			this._imageViewerContainer.classList.remove("dwc-hide");
+			this._modalContentContainer.classList.remove('dwc-overflow');
 			this.modalState.isPdfViewerOpen = false;
 		}
 	}
 
-	private changePdfPage(pageShift:number): void{
-		if (this.pdfState.pdf == null || this.pdfState.currentPage == 1) return;
-		this.pdfState.currentPage += pageShift;
+	private setPdfPage(event: KeyboardEvent): void {
+		if (this.pdfState.pdf == null) return;
+
+		// Get key code
+		let code = (event.keyCode ? event.keyCode : event.which);
+
+		// If key code matches that of the Enter key
+		if (code == 13) {
+			let desiredPage = parseInt(this._pdfPageInput.value);
+
+			if (desiredPage >= 1 &&
+				desiredPage <= this.pdfState.pdf._pdfInfo.numPages) {
+
+				this.pdfState.currentPage = desiredPage;
+				this.pdfRender();
+			}
+		}
+	}
+
+	private changePdfPage(pageShift: number): void {
+		if (this.pdfState.pdf == null) return;
+
+		let nextPage = this.pdfState.currentPage;
+		nextPage += pageShift;
+
+		if (nextPage <= 0 || nextPage > this.pdfState.pdf._pdfInfo.numPages) return;
+
+		this.pdfState.currentPage = nextPage;
 		this._pdfPageInput.value = this.pdfState.currentPage.toString();
 		this.pdfRender();
 	}
+
+	private zoomPdfPage(zoomChange: number): void {
+		if (this.pdfState.pdf == null) return;
+		this.pdfState.zoom += zoomChange;
+		this.pdfRender();
+	}
+
+	//---------- END PDF LOGIC
 
 	/**
 	 * Called when any value in the property bag has changed. This includes field values, data-sets, global values such as container height and width, offline status, control metadata values such as label, visible, etc.

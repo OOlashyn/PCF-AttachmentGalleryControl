@@ -90,25 +90,13 @@
     flex-direction: column;
 }
 
-.close-span {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-}
-
-.close-span:hover,
-.close-span:focus {
-    color: white;
-    text-decoration: none;
-    cursor: pointer;
-}
-
 .dwc-modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 2px 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
     background-color: black;
     color: white;
 }
@@ -130,8 +118,13 @@
     background-color: rgba(0, 0, 0, 0.4);
 }
 
-.dwc-modal-img {
+.dwc-modal-img-container{
+    height: 700px;
+    max-width:100%;
     margin: auto;
+}
+
+.dwc-modal-img {
     display: block;
     max-height: 90%;
 }
@@ -150,22 +143,51 @@
     animation-duration: 0.4s
 }
 
-.dwc-modal-img-container{
-    height: 100%;
-    width:100%;
+.dwc-modal-notetext-container{
+    background: white;
+    padding-left: 5px;
+    width:20%;
+    display: flex;
+    flex-wrap: wrap
+}
+
+.dwc-modal-notetext{
+    width: 100%;
+    word-break: break-word;
 }
 
 .dwc-hide{
-    display: none;
+    display: none !important;
+}
+
+.dwc-pdf-canvas-container{
+    width: 100%;
+    overflow: auto;
+    text-align: center;
 }
 
 .dwc-flex-container{
     display: flex;
 }
 
+.dwc-overflow{
+    overflow: auto;
+}
+
 .dwc-pageinput-container{
     margin-left: 4px;
     margin-right: 4px;
+    align-items: center;
+}
+
+.dwc-side-margin-4{
+    margin-left: 4px;
+    margin-right: 4px;
+}
+
+.dwc-zoom-container{
+    display: flex;
+    align-items: center;
 }
 
 .dwc-page-input {
