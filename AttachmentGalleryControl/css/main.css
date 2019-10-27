@@ -90,6 +90,12 @@
     flex-direction: column;
 }
 
+.dwc-center{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 .dwc-modal-header {
     display: flex;
     justify-content: space-between;
@@ -203,6 +209,12 @@
 
 .dwc-page-span{
     font-size:20px;
+}
+
+.dwc-top-right {
+    position: absolute;
+    top: 8px;
+    right: 16px;
 }
 
 /* Add Animation */

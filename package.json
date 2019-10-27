@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "@types/file-saver": "^2.0.1",
-    "pcf-scripts": "^0.2.71",
-    "pcf-start": "^0.2.71"
+    "pcf-scripts": "^0.3.4",
+    "pcf-start": "^0.3.4"
   }
 }

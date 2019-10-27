@@ -34,20 +34,20 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 	private _modalContentContainer: HTMLDivElement;
 	private _modalHeaderText: HTMLHeadingElement;
 	private _modalImage: HTMLImageElement;
-	private _noteTitle: HTMLParagraphElement;
 	private _noteText: HTMLParagraphElement;
 	private _noteTextContainer: HTMLDivElement;
-	private _imageColumn: HTMLDivElement;
 	private _pdfCanvas: HTMLCanvasElement;
 	private pdfState: IPdfState;
 	private modalState: IModalState;
 	private _pdfViewerContainer: HTMLDivElement;
-	private _modalImageConatiner: HTMLDivElement;
+	private _modalImageContainer: HTMLDivElement;
 	private _pdfPageInput: HTMLInputElement;
 	private _pdfTotalPages: HTMLSpanElement;
 	private _pdfPageControlsContainer: HTMLDivElement;
 	private _imageViewerContainer: HTMLDivElement;
 	private pdfImageSrc: string;
+	private _mainDivContainer: HTMLDivElement;
+	private _notFoundContainer: HTMLDivElement;
 
 	/**
 	 * Empty constructor.
@@ -99,10 +99,28 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 			zoom: 1
 		}
 
-		this._container = document.createElement("div");
+		this._container = document.createElement('div');
+
+		//--------- Attachments not found placeholder
+		let notFoundContainer = document.createElement('div');
+
+		let refreshIcon = document.createElement('i');
+		refreshIcon.className = 'dwc-top-right ms-Icon ms-Icon--Refresh';
+
+		notFoundContainer.appendChild(refreshIcon);
+
+		let notFoundText = document.createElement('p');
+		notFoundText.classList.add('dwc-center');
+		notFoundText.innerText = 'Attachments not found. Press Refresh to try to load them again.';
+
+		notFoundContainer.appendChild(notFoundText);
+
+		this._container.appendChild(notFoundContainer);
 
 		let mainContainer = document.createElement('div');
-		mainContainer.classList.add('main-container');
+		mainContainer.classList.add('main-container','dwc-hide');
+
+		this._mainDivContainer = mainContainer;
 
 		//-------- creating thumbnails
 		this._thumbnailsGallery = document.createElement("div");
@@ -280,16 +298,16 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 
 		modalBody.appendChild(imageViewerContainer);
 
-		let modalImageConatiner = document.createElement('div');
-		modalImageConatiner.classList.add('dwc-modal-img-container');
+		let modalImageContainer = document.createElement('div');
+		modalImageContainer.classList.add('dwc-modal-img-container');
 
 		this._modalImage = document.createElement('img');
 		this._modalImage.classList.add('dwc-modal-img');
 
-		modalImageConatiner.appendChild(this._modalImage);
-		imageViewerContainer.appendChild(modalImageConatiner);
+		modalImageContainer.appendChild(this._modalImage);
+		imageViewerContainer.appendChild(modalImageContainer);
 
-		this._modalImageConatiner = modalImageConatiner;
+		this._modalImageContainer = modalImageContainer;
 
 		//-------- create preview note container
 
@@ -398,35 +416,6 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 	// 	this.CreateGallery(this._notes);
 	// }
 
-	private b64toBlob(b64Data: string, contentType: string, sliceSize: number): Blob {
-		contentType = contentType || '';
-		sliceSize = sliceSize || 512;
-
-		var byteCharacters = atob(b64Data);
-		var byteArrays = [];
-
-		for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-			var slice = byteCharacters.slice(offset, offset + sliceSize);
-
-			var byteNumbers = new Array(slice.length);
-			for (var i = 0; i < slice.length; i++) {
-				byteNumbers[i] = slice.charCodeAt(i);
-			}
-
-			var byteArray = new Uint8Array(byteNumbers);
-
-			byteArrays.push(byteArray);
-		}
-
-		var blob = new Blob(byteArrays, { type: contentType });
-		return blob;
-	}
-
-	private downloadFile(): void {
-		let note = this._notes[this._currentIndex];
-		let blob = this.b64toBlob(note.documentBody, note.mimeType, 512);
-		saveAs(blob, note.filename);
-	}
 
 	/**
 	 * Generate Image Element src url
@@ -470,14 +459,6 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 		try {
 
 			const result = await this._context.webAPI.retrieveMultipleRecords("annotation", searchQuery);
-
-			// if(typeof this._context.webAPI.retrieveMultipleRecords == 'function'){
-			// 	console.log("context.webAPI.retrieveMultipleRecords works!");
-			// 	result = await this._context.webAPI.retrieveMultipleRecords("annotation", searchQuery);
-			// } else {
-			// 	// @ts-ignore
-			// 	result = await Xrm.WebApi.retrieveMultipleRecords("annotation", searchQuery);
-			// }
 
 			console.log("Retrieved attachments", result);
 			if (result && result.entities) {
@@ -527,9 +508,12 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 				count++;
 			}
 
+			this._notFoundContainer.classList.add('dwc-hide');
+			this._mainDivContainer.classList.remove('dwc-hide');
+
 			this._currentIndex = 0;
 			this.setPreview(0);
-		}
+		} 
 	}
 
 	private setPreviewFromThumbnail(e: Event) {
@@ -581,7 +565,40 @@ export class AttachmentGalleryControl implements ComponentFramework.StandardCont
 		this.setPreview(this._currentIndex += moveIndex);
 	}
 
-	//---------- PDF LOGIC
+	//=========== FILE DOWNLOAD LOGIC ===============
+
+	private b64toBlob(b64Data: string, contentType: string, sliceSize: number): Blob {
+		contentType = contentType || '';
+		sliceSize = sliceSize || 512;
+
+		var byteCharacters = atob(b64Data);
+		var byteArrays = [];
+
+		for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+			var slice = byteCharacters.slice(offset, offset + sliceSize);
+
+			var byteNumbers = new Array(slice.length);
+			for (var i = 0; i < slice.length; i++) {
+				byteNumbers[i] = slice.charCodeAt(i);
+			}
+
+			var byteArray = new Uint8Array(byteNumbers);
+
+			byteArrays.push(byteArray);
+		}
+
+		var blob = new Blob(byteArrays, { type: contentType });
+		return blob;
+	}
+
+	private downloadFile(): void {
+		let note = this._notes[this._currentIndex];
+		let blob = this.b64toBlob(note.documentBody, note.mimeType, 512);
+		saveAs(blob, note.filename);
+	}
+
+
+	//=========== PDF LOGIC
 
 	private setPdfViewer(pdfItem: Attachment) {
 		let pdfData = atob(pdfItem.documentBody);
