@@ -1,3 +1,5 @@
+[![SWUbanner](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner-direct-single.svg)](https://vshymanskyy.github.io/StandWithUkraine)
+
 # PCF-AttachmentGalleryControl
 
 This is sample PCF control that shows images and pdf from attached notes and also can show note title and note text.
