@@ -102,20 +102,20 @@ export class AttachmentGallery implements ComponentFramework.StandardControl<IIn
 		this._container = document.createElement('div');
 
 		//--------- Attachments not found placeholder
-		let notFoundContainer = document.createElement('div');
+		this._notFoundContainer = document.createElement('div');
 
 		let refreshIcon = document.createElement('i');
 		refreshIcon.className = 'dwc-top-right ms-Icon ms-Icon--Refresh';
 
-		notFoundContainer.appendChild(refreshIcon);
+		this._notFoundContainer.appendChild(refreshIcon);
 
 		let notFoundText = document.createElement('p');
 		notFoundText.classList.add('dwc-center');
 		notFoundText.innerText = 'Attachments not found. Press Refresh to try to load them again.';
 
-		notFoundContainer.appendChild(notFoundText);
+		this._notFoundContainer.appendChild(notFoundText);
 
-		this._container.appendChild(notFoundContainer);
+		this._container.appendChild(this._notFoundContainer);
 
 		let mainContainer = document.createElement('div');
 		mainContainer.classList.add('main-container','dwc-hide');
