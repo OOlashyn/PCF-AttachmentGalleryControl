@@ -1,2 +1,0 @@
-C:\Code\PCF-AttachmentGalleryControl\obj\Debug\GalleryControl.pcfprojAssemblyReference.cache
-C:\Code\PCF-AttachmentGalleryControl\obj\Debug\GalleryControl.pcfproj.CoreCompileInputs.cache
