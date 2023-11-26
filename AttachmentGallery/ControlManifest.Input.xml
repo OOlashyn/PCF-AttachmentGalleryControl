@@ -32,10 +32,8 @@
     -->
     <resources>
       <code path="index.ts" order="1"/>
-      <!-- UNCOMMENT TO ADD MORE RESOURCES
-      <css path="css/AttachmentGallery.css" order="1" />
-      <resx path="strings/AttachmentGallery.1033.resx" version="1.0.0" />
-      -->
+      <css path="css/main.css" order="1" />
+      <img path="img/pdf_icon.png" />
     </resources>
 
     <feature-usage>
