@@ -8,3 +8,10 @@
 
 # output directory
 /out
+
+# msbuild output directories
+/bin
+/obj
+
+# MSBuild Binary and Structured Log
+*.binlog
