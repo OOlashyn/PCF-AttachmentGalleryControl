@@ -1,12 +1,13 @@
 [![SWUbanner](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner-direct-single.svg)](https://vshymanskyy.github.io/StandWithUkraine)
 
 # Attachment Gallery Control
+![GitHub all releases](https://img.shields.io/github/downloads/OOlashyn/PCF-AttachmentGalleryControl/total)
 
 This is PCF control that shows images and pdf from attached notes and also can show note title and note text.
 
 ![Demo](https://github.com/OOlashyn/PCF-AttachmentGalleryControl/blob/master/Screenshots/gallery-v1.gif?raw=true)
 
-**IMPORTANT: pdf.js update to v4 broke existing functionality (see issue [#36](https://github.com/OOlashyn/PCF-AttachmentGalleryControl/issues/36)). Unfortunately, this control was created before PCF was GA and fixing the issue while preserving correct naming is not possible. To solve this issue please delete previous solution and install the latest [1.0.0.1 release](https://github.com/OOlashyn/PCF-AttachmentGalleryControl/releases/)**
+**IMPORTANT: pdf.js update to v4 broke existing functionality (see issue [#36](https://github.com/OOlashyn/PCF-AttachmentGalleryControl/issues/36)). Unfortunately, this control was created before PCF was GA and fixing the issue while preserving correct naming is not possible. To solve this issue please delete the previous solution and install the latest [1.0.0.1 release](https://github.com/OOlashyn/PCF-AttachmentGalleryControl/releases/)**
 
 Update to version 1.0.0
 
