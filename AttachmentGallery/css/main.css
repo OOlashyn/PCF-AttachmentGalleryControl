@@ -1,231 +1,226 @@
-@import "https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/10.0.0/css/fabric.min.css";
-
-.thumbnail {
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 5px;
-    margin: 5px;
-    height: 100px;
+* {
+  box-sizing: border-box
 }
 
-/* Add a hover effect (blue shadow) */
-.thumbnail:hover {
-    box-shadow: 0 0 2px 1px rgba(0, 140, 186, 0.5);
+/* main container */
+.main-container {
+  width: 1000px;
 }
 
-.thumbnailsList {
-    display: block;
-    position: relative;
-    height: auto;
-    max-width: 100%;
-    overflow-y: hidden;
-    overflow-x: auto;
-    word-wrap: normal;
-    white-space: nowrap;
+/* Slideshow container */
+.slideshow-container {
+  position: relative;
+  height: 600px;
 }
 
-.preview-section {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    max-width: 100%;
-    position: relative;
+/* Hide the images by default */
+.mySlides {
+  display: none;
+  height: 100%;
 }
 
-.preview-img {
-    max-width: 100%;
-    height:400px;
-    cursor: pointer;
+.mySlides.active {
+  display: block;
 }
 
-.header-icon{
-    font-size: 24px;
-    cursor: pointer;
+.mySlides img {
+  height: 100%;
+  max-width: 100%;
+  cursor: pointer;
 }
 
-.header-icon-container{
-    display: flex;
-    justify-content: space-around;
-    width: 200px;
-}
-
-.arrow-button {
-    cursor: pointer;
-    position: absolute;
-    top: 50%;
-    width: auto;
-    margin-top: -22px;
-    padding: 16px;
-    color: white;
-    font-weight: bold;
-    font-size: 18px;
-    transition: 0.6s ease;
-    border-radius: 0 3px 3px 0;
-    user-select: none;
-    background-color: rgba(0, 0, 0, 0.4);
+/* Next & previous buttons */
+.prev,
+.next {
+  cursor: pointer;
+  position: absolute;
+  top: 50%;
+  width: auto;
+  margin-top: -22px;
+  padding: 16px;
+  color: white;
+  font-weight: bold;
+  font-size: 18px;
+  transition: 0.6s ease;
+  border-radius: 0 3px 3px 0;
+  user-select: none;
 }
 
 /* Position the "next button" to the right */
-.preview-next {
-    right: 0;
-    border-radius: 3px 0 0 3px;
+.next {
+  right: 0;
+  border-radius: 3px 0 0 3px;
 }
 
-/* Position the "prev button" to the left */
-.preview-prev {
-    left: 0;
-    border-radius: 3px 0 0 3px;
+/* Position the "next button" to the right */
+.prev {
+  left: 0;
 }
 
 /* On hover, add a black background color with a little bit see-through */
-.preview-prev:hover,
-.preview-next:hover {
-    background-color: rgba(0, 0, 0, 0.8);
+.prev:hover,
+.next:hover {
+  background-color: rgba(0, 0, 0, 0.8);
 }
 
-.main-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
+/* Caption text */
+.text {
+  color: #f2f2f2;
+  font-size: 15px;
+  padding: 5px 10px;
+  position: absolute;
+  bottom: 0px;
+  width: 100%;
+  text-align: center;
+  background-color: #0000009c;
 }
 
-.dwc-center{
-    display: flex;
-    justify-content: center;
-    align-items: center;
+/* Number text (1/3 etc) */
+.numbertext {
+  color: #f2f2f2;
+  font-size: 12px;
+  padding: 8px 12px;
+  position: absolute;
+  top: 0;
 }
 
-.dwc-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 2px 10px;
-    padding-top: 10px;
-    padding-bottom: 10px;
-    background-color: black;
-    color: white;
+/* The dots/bullets/indicators */
+.dot {
+  cursor: pointer;
+  height: 15px;
+  width: 15px;
+  margin: 0 2px;
+  background-color: #bbb;
+  border-radius: 50%;
+  display: inline-block;
+  transition: background-color 0.6s ease;
 }
 
-.dwc-modal-body {
-    padding: 2px 16px;
-    height: 100%;
+.active,
+.dot:hover {
+  background-color: #717171;
 }
 
-.dwc-modal {
-    display: none;
-    position: fixed;
-    z-index: 1;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgb(0, 0, 0);
-    background-color: rgba(0, 0, 0, 0.4);
+/* Fading animation */
+.fade {
+  animation-name: fade;
+  animation-duration: 1.5s;
 }
 
-.dwc-modal-img-container{
-    height: 700px;
-    max-width:100%;
-    margin: auto;
+@keyframes fade {
+  from {
+    opacity: .4
+  }
+
+  to {
+    opacity: 1
+  }
 }
 
-.dwc-modal-img {
-    display: block;
-    max-height: 90%;
+/* Thumbnails */
+.thumbnails {
+  background-color: #333;
+  overflow-y: hidden;
+  overflow-x: auto;
+  white-space: nowrap;
+  height: 100px;
 }
 
-/* Modal Content */
-.dwc-modal-content {
-    background-color: rgba(0, 0, 0, 0.8);
-    position: relative;
-    margin: auto;
-    padding: 0;
-    border: 1px solid #888;
-    width: 100%;
-    height: 100%;
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-    animation-name: animatetop;
-    animation-duration: 0.4s
+.thumbnails img {
+  padding: 10px;
+  height: 100%;
+  cursor: pointer;
 }
 
-.dwc-modal-notetext-container{
-    background: white;
-    padding-left: 5px;
-    width:20%;
-    display: flex;
-    flex-wrap: wrap
+/* loader */
+.loader {
+  border: 16px solid #f3f3f3;
+  /* Light grey */
+  border-top: 16px solid #3498db;
+  /* Blue */
+  border-radius: 50%;
+  width: 120px;
+  height: 120px;
+  animation: spin 2s linear infinite;
+  margin: auto;
 }
 
-.dwc-modal-notetext{
-    width: 100%;
-    word-break: break-word;
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
-.dwc-hide{
-    display: none !important;
+/* dialog */
+.custom-dialog {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  overflow-y: hidden;
+  background-color: #000000a6;
 }
 
-.dwc-pdf-canvas-container{
-    width: 100%;
-    overflow: auto;
-    text-align: center;
+.custom-dialog__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background-color: #333;
+  color: #fff;
 }
 
-.dwc-flex-container{
-    display: flex;
+.custom-dialog__header .dialog-button {
+  border: none;
+  background: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
 }
 
-.dwc-overflow{
-    overflow: auto;
+.custom-dialog__header .dialog-button:hover {
+  color: #3cb8fd;
 }
 
-.dwc-pageinput-container{
-    margin-left: 4px;
-    margin-right: 4px;
-    align-items: center;
+.custom-dialog img {
+  height: 100%;
+  max-width: 100%;
 }
 
-.dwc-side-margin-4{
-    margin-left: 4px;
-    margin-right: 4px;
+.custom-dialog__body {
+  height: 91.2vh;
 }
 
-.dwc-zoom-container{
-    display: flex;
-    align-items: center;
+/* delete dialog */
+
+.delete-dialog {
+  background-color: white;
+  position: absolute;
+  top: 42%;
+  left: 42%;
+  padding: 25px;
+  border-radius: 15px;
 }
 
-.dwc-page-input {
-    width: 50px;
-    background-color: #7b7b7b;
-    border: none;
-    color: white;
-    text-align: right;
-    padding-right: 4px;
-    height: 24px;
-    font-size: 18px;
+.delete-dialog__button-container {
+  display: flex;
+  justify-content: flex-end;
 }
 
-.dwc-page-span{
-    font-size:20px;
+.delete-dialog__button {
+  cursor: pointer;
+  padding: 5px 10px;
+  margin-right: 10px;
 }
 
-.dwc-top-right {
-    position: absolute;
-    top: 8px;
-    right: 16px;
+.delete-dialog__button-confirm {
+  background-color: #0f6dbc;
+  color: white;
 }
 
-/* Add Animation */
-@keyframes animatetop {
-    from {
-        top: -300px;
-        opacity: 0
-    }
-
-    to {
-        top: 0;
-        opacity: 1
-    }
+.delete-dialog__button-confirm:hover {
+  background-color: #0f5289;
 }

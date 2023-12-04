@@ -19,17 +19,10 @@
     </external-service-usage>
     <!-- property node identifies a specific, configurable piece of data that the control expects from CDS -->
     <property name="PlaceHolder" display-name-key="PlaceHolder" description-key="PlaceHolder for gallery" of-type="SingleLine.Text" usage="bound" required="true" />
-    <!--
-      Property node's of-type attribute can be of-type-group attribute.
-      Example:
-      <type-group name="numbers">
-        <type>Whole.None</type>
-        <type>Currency</type>
-        <type>FP</type>
-        <type>Decimal</type>
-      </type-group>
-      <property name="sampleProperty" display-name-key="Property_Display_Key" description-key="Property_Desc_Key" of-type-group="numbers" usage="bound" required="true" />
-    -->
+    <property name="AllowDelete" display-name-key="Allow Delete" description-key="Specify if delete button and functionality is enabled (false by default)" of-type="TwoOptions" usage="input" required="true" />
+    <property name="ShowCaptions" display-name-key="Show Captions" description-key="Specify if captions with file names are visible (false by default)" of-type="TwoOptions" usage="input" required="true" />
+    <property name="ShowThumbnails" display-name-key="Show Thumbnails" description-key="Specify if thumbnails are visible (true by default)" of-type="TwoOptions" usage="input" required="true" />
+
     <resources>
       <code path="index.ts" order="1"/>
       <css path="css/main.css" order="1" />
