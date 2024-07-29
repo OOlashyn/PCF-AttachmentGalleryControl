@@ -475,7 +475,7 @@ export class AttachmentGallery implements ComponentFramework.StandardControl<IIn
                          title: result.entities[index].filename,
                          filename: result.entities[index].filename,
                          documentBody: await this.blobtoB64(fileContent),
-                         isAttachmentPdf: false
+                         isAttachmentPdf: result.entities[index].filename.indexOf('.pdf') != -1
                      };
                      this._notes.push(item);
                  }
