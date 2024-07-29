@@ -447,16 +447,24 @@ export class AttachmentGallery implements ComponentFramework.StandardControl<IIn
     }
 
     private async addImagesfromFileColumns(curentRecord: ComponentFramework.EntityReference) {
-        const searchQuery = `?$select=fileattachmentid,regardingfieldname,regardingfieldname,filename,mimetype&$filter=(_objectid_value eq ${curentRecord.id})`;
+        // Dynamics is not always accurate with the Mimetypes, so we need to check the file extension in combination with 'octet-stream' metadata as well
+        const pdfAndImageMimetypeFilter = "startswith(mimetype, 'application%2fpdf') or startswith(mimetype, 'image%2f')";
+        const octetStreamMimetypeFilter = "(endswith(mimetype, 'octet-stream') and (endswith(filename, '.pdf') or endswith(filename, '.png') or endswith(filename, '.jpg') or endswith(filename, '.jpeg')))";
+        const searchQuery = `?$select=fileattachmentid,regardingfieldname,regardingfieldname,filename,mimetype&$filter=(_objectid_value eq ${curentRecord.id} and ((${pdfAndImageMimetypeFilter} or ${octetStreamMimetypeFilter})))`;
         try {
 
+            // Retrieve the file attachments
             const result = await this._context.webAPI.retrieveMultipleRecords("fileattachment", searchQuery);
-
             console.log("Retrieved column file attachments", result);
+
+            // Retrieve the plural name for the entity (is needed for the download url)
+            const entityMetadata = await this._context.utils.getEntityMetadata(curentRecord.name, ["EntitySetName"]);
+            console.log("Retrieved entity Metadata", entityMetadata);
+
             if (result && result.entities) {
                  for (let index = 0; index < result.entities.length; index++) {
                     // Retrieve the file contents
-                    const downloadFileUrl = `/api/data/v9.2/${curentRecord.name}s(${curentRecord.id})/${result.entities[index].regardingfieldname}/$value`;
+                    const downloadFileUrl = `/api/data/v9.2/${entityMetadata.EntitySetName}(${curentRecord.id})/${result.entities[index].regardingfieldname}/$value`;
                     const fileContent = await fetch(downloadFileUrl).then(response => response.blob());
 
                     console.log("Retrieved file contents", fileContent);
