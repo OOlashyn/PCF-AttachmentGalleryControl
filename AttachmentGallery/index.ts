@@ -416,7 +416,7 @@ export class AttachmentGallery implements ComponentFramework.StandardControl<IIn
                         id: result.entities[index].id,
                         mimeType: result.entities[index].mimetype,
                         noteText: result.entities[index].notetext,
-                        title: result.entities[index].subject,
+                        title: result.entities[index].subject || result.entities[index].filename,
                         filename: result.entities[index].filename,
                         documentBody: result.entities[index].documentbody
                     };
