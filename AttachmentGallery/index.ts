@@ -1,7 +1,9 @@
 import {IInputs, IOutputs} from "./generated/ManifestTypes";
 import { saveAs } from 'file-saver';
+import { Buffer } from 'buffer';
 
 interface Attachment {
+    isAttachmentPdf: boolean;
 	documentBody: string;
 	mimeType: string;
 	title: string;
@@ -111,7 +113,7 @@ export class AttachmentGallery implements ComponentFramework.StandardControl<IIn
 
 		let notFoundText = document.createElement('p');
 		notFoundText.classList.add('dwc-center');
-		notFoundText.innerText = 'Attachments not found. Press Refresh to try to load them again.';
+		notFoundText.innerText = 'No attachments found in timeline, nor any file field. Press Refresh to try to load them again.';
 
 		this._notFoundContainer.appendChild(notFoundText);
 
@@ -373,6 +375,13 @@ export class AttachmentGallery implements ComponentFramework.StandardControl<IIn
     private generateImageSrcUrl(fileType: string, fileContent: string): string {
         return "data:" + fileType + ";base64, " + fileContent;
     }
+    
+    private async blobtoB64(blob: Blob): Promise<string> {
+        const arrayBuffer = await blob.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const base64 = buffer.toString('base64');
+        return base64;
+    }
 
     private toggleNoteColumn(): void {
         if (this.modalState.isPdfViewerOpen) return;
@@ -400,6 +409,13 @@ export class AttachmentGallery implements ComponentFramework.StandardControl<IIn
     private async GetAttachments(curentRecord: ComponentFramework.EntityReference): Promise<Attachment[]> {
         console.log("GetAttachments started");
 
+        await this.addImagesAndPdfsFromNotes(curentRecord);
+        await this.addImagesfromFileColumns(curentRecord);
+        
+        return this._notes;
+    }
+
+    private async addImagesAndPdfsFromNotes(curentRecord: ComponentFramework.EntityReference) {
         const searchQuery = "?$select=annotationid,documentbody,mimetype,notetext,subject,filename" +
             "&$filter=_objectid_value eq " +
             curentRecord.id +
@@ -418,7 +434,8 @@ export class AttachmentGallery implements ComponentFramework.StandardControl<IIn
                         noteText: result.entities[index].notetext,
                         title: result.entities[index].subject || result.entities[index].filename,
                         filename: result.entities[index].filename,
-                        documentBody: result.entities[index].documentbody
+                        documentBody: result.entities[index].documentbody,
+                        isAttachmentPdf: result.entities[index].mimetype.indexOf('pdf') != -1
                     };
                     this._notes.push(item);
                 }
@@ -427,8 +444,46 @@ export class AttachmentGallery implements ComponentFramework.StandardControl<IIn
             console.error("ERROR RETRIEVING ATTACHMENT");
             console.error(error);
         }
+    }
 
-        return this._notes;
+    private async addImagesfromFileColumns(curentRecord: ComponentFramework.EntityReference) {
+        // Dynamics is not always accurate with the Mimetypes, so we need to check the file extension in combination with 'octet-stream' metadata as well
+        const pdfAndImageMimetypeFilter = "startswith(mimetype, 'application%2fpdf') or startswith(mimetype, 'image%2f')";
+        const octetStreamMimetypeFilter = "(endswith(mimetype, 'octet-stream') and (endswith(filename, '.pdf') or endswith(filename, '.png') or endswith(filename, '.jpg') or endswith(filename, '.jpeg')))";
+        const searchQuery = `?$select=fileattachmentid,regardingfieldname,regardingfieldname,filename,mimetype&$filter=(_objectid_value eq ${curentRecord.id} and ((${pdfAndImageMimetypeFilter} or ${octetStreamMimetypeFilter})))`;
+        try {
+
+            // Retrieve the file attachments
+            const result = await this._context.webAPI.retrieveMultipleRecords("fileattachment", searchQuery);
+            console.log("Retrieved column file attachments", result);
+
+            // Retrieve the plural name for the entity (is needed for the download url)
+            const entityMetadata = await this._context.utils.getEntityMetadata(curentRecord.name, ["EntitySetName"]);
+            console.log("Retrieved entity Metadata", entityMetadata);
+
+            if (result && result.entities) {
+                 for (let index = 0; index < result.entities.length; index++) {
+                    // Retrieve the file contents
+                    const downloadFileUrl = `/api/data/v9.2/${entityMetadata.EntitySetName}(${curentRecord.id})/${result.entities[index].regardingfieldname}/$value`;
+                    const fileContent = await fetch(downloadFileUrl).then(response => response.blob());
+
+                    console.log("Retrieved file contents", fileContent);
+                     let item: Attachment = {
+                         id: result.entities[index].id,
+                         mimeType: result.entities[index].mimetype,
+                         noteText: result.entities[index].regardingfieldname,
+                         title: result.entities[index].filename,
+                         filename: result.entities[index].filename,
+                         documentBody: await this.blobtoB64(fileContent),
+                         isAttachmentPdf: result.entities[index].filename.indexOf('.pdf') != -1
+                     };
+                     this._notes.push(item);
+                 }
+            }
+        } catch (error) {
+            console.error("ERROR RETRIEVING FILE COLUMN DATA");
+            console.error(error);
+        }
     }
 
     private setPdfImage(body:string){
@@ -470,16 +525,14 @@ export class AttachmentGallery implements ComponentFramework.StandardControl<IIn
     }
 
     private setModalImage(note: Attachment) {
-        let isAttachmentPdf = note.mimeType.indexOf('pdf') != -1;
-
-        if (this.modalState.isOpen && !this.modalState.isPdfViewerOpen && isAttachmentPdf) {
+        if (this.modalState.isOpen && !this.modalState.isPdfViewerOpen && note.isAttachmentPdf) {
             this.togglePdfViwer(true);
             this.setPdfViewer(note);
         } else {
-            if (this.modalState.isOpen && this.modalState.isPdfViewerOpen && isAttachmentPdf) {
+            if (this.modalState.isOpen && this.modalState.isPdfViewerOpen && note.isAttachmentPdf) {
                 this.setPdfViewer(note);
             } else {
-                if (this.modalState.isOpen && this.modalState.isPdfViewerOpen && !isAttachmentPdf) {
+                if (this.modalState.isOpen && this.modalState.isPdfViewerOpen && !note.isAttachmentPdf) {
                     this.togglePdfViwer(false);
                 }
                 this._modalImage.src = this._previewImg.src;
@@ -492,11 +545,9 @@ export class AttachmentGallery implements ComponentFramework.StandardControl<IIn
         if (currentNoteNumber < 0) { currentNoteNumber = this._notes.length - 1 }
         let currentNote = this._notes[currentNoteNumber];
 
-        let isAttachmentPdf = currentNote.mimeType.indexOf('pdf') != -1;
-
-        this._previewImg.src = !isAttachmentPdf
-            ? this.generateImageSrcUrl(currentNote.mimeType, currentNote.documentBody)
-            : this.pdfImageSrc;
+        this._previewImg.src = currentNote.isAttachmentPdf
+            ? this.pdfImageSrc
+            : this.generateImageSrcUrl(currentNote.mimeType, currentNote.documentBody);
 
         this._modalHeaderText.innerHTML = (currentNoteNumber + 1).toString() + " / " + this._notes.length.toString()
             + " " + currentNote.title;
